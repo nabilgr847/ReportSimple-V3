@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReportSimple V3</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--navy:#0b2a55;--blue:#1769e0;--cyan:#12b5cb;--bg:#f3f7fc;--card:#fff;--red:#d32f2f;--txt:#12233f;--mut:#5b6b85;--line:#dbe4f0;--ok:#1b8a4b;--warn:#b26a00}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI","Noto Sans Bengali","Nirmala UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit}
+a{color:var(--blue)}
+.note{color:var(--mut);font-size:13px}
+#banner{background:#fff4e5;color:#7a4b00;font-size:12px;padding:6px 12px;text-align:center}
+/* ---------- MOBILE layout (default) ---------- */
+#side{display:none}
+#top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+#top b{font-size:17px}
+#top a{background:var(--red);color:#fff;text-decoration:none;border-radius:16px;padding:5px 12px;font-weight:600;font-size:13px}
+main{padding:12px 12px 90px}
+#bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);display:flex}
+#bottom button{flex:1;border:0;background:none;padding:7px 2px 6px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:1px}
+#bottom button .ic{font-size:20px}
+#bottom button.on{color:var(--blue);font-weight:700}
+#moreSheet{position:fixed;left:8px;right:8px;bottom:64px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #0003;padding:6px;display:none}
+#moreSheet.open{display:block}
+#moreSheet button{display:flex;gap:10px;align-items:center;width:100%;border:0;background:none;padding:12px;text-align:left;font-size:15px;border-radius:10px}
+#moreSheet button:active{background:var(--bg)}
+.tab{display:none}.tab.on{display:block}
+h1{font-size:20px;margin:4px 0 10px;color:var(--navy)}
+h2{font-size:16px;margin:0 0 8px;color:var(--navy)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid{display:grid;gap:10px}
+.home-cards{grid-template-columns:1fr 1fr}
+.hc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;cursor:pointer;display:block;width:100%}
+.hc .ic{font-size:26px;display:block;margin-bottom:4px}
+.hc b{display:block;color:var(--navy)}
+.hc span.s{font-size:12px;color:var(--mut)}
+.bm,.care{display:grid;gap:12px;grid-template-columns:1fr}
+#view3d{height:340px;background:linear-gradient(#e9f2ff,#fff);border-radius:12px;border:1px solid var(--line);position:relative;touch-action:none;overflow:hidden}
+#view3d canvas{display:block;width:100%;height:100%}
+#map{height:260px;border-radius:12px;border:1px solid var(--line);background:#e9eef5}
+.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--blue);color:#fff;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.sec{background:#e6eefb;color:var(--blue)}
+.btn.red{background:var(--red)}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.nw{flex-wrap:nowrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:18px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+input[type=text],input[type=number],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+textarea{min-height:70px}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px;margin-bottom:8px;font-size:15px}
+.opt:active{background:#e6eefb}
+.emerg{background:#fdecec;border:2px solid var(--red);border-radius:14px;padding:14px;margin-bottom:12px}
+.emerg h3{margin:0 0 6px;color:var(--red)}
+.urgent{background:#fff4e5;border:1px solid #f0b35a;border-radius:12px;padding:10px;margin-bottom:10px}
+.tag{display:inline-block;border-radius:10px;padding:2px 9px;font-size:12px;font-weight:600}
+.tag.a{background:#e3f3ea;color:var(--ok)}.tag.b{background:#e6eefb;color:var(--blue)}.tag.c{background:#fdeed8;color:var(--warn)}
+.msg{padding:9px 12px;border-radius:12px;margin-bottom:8px;max-width:92%;white-space:pre-wrap}
+.msg.u{background:var(--blue);color:#fff;margin-left:auto}
+.msg.a{background:#fff;border:1px solid var(--line)}
+.chatbox{max-height:52vh;overflow:auto;padding:4px}
+.src{font-size:13px;margin:4px 0}
+details{border-top:1px solid var(--line);padding:8px 0}
+summary{font-weight:600;cursor:pointer}
+.warnbox{background:#fff4e5;border:1px solid #f0b35a;color:#7a4b00;border-radius:12px;padding:10px;margin-bottom:12px;font-size:13px}
+canvas#chart{width:100%;height:200px;border:1px solid var(--line);border-radius:10px;background:#fff}
+iframe#v2{width:100%;height:78vh;border:1px solid var(--line);border-radius:12px;background:#fff}
+.spin{color:var(--mut)}
+/* ---------- PC layout ---------- */
+@media(min-width:900px){
+  body{display:grid;grid-template-columns:250px 1fr;grid-template-rows:auto 1fr;min-height:100vh}
+  #banner{grid-column:1/3}
+  #top,#bottom,#moreSheet{display:none!important}
+  #side{display:flex;flex-direction:column;gap:2px;background:var(--navy);color:#fff;padding:16px 12px;position:sticky;top:0;height:calc(100vh - 28px);align-self:start}
+  #side .brand{font-size:19px;font-weight:700;margin:0 8px 2px}
+  #side .sub{font-size:12px;opacity:.7;margin:0 8px 14px}
+  #side button{display:flex;gap:10px;align-items:center;border:0;background:none;color:#cfe0ff;padding:10px 12px;border-radius:10px;font-size:15px;text-align:left;cursor:pointer}
+  #side button:hover{background:#ffffff14}
+  #side button.on{background:var(--blue);color:#fff}
+  #side a.sos{margin-top:auto;background:var(--red);color:#fff;text-decoration:none;text-align:center;border-radius:10px;padding:11px;font-weight:700}
+  main{padding:26px 34px;max-width:1320px}
+  h1{font-size:26px}
+  .home-cards{grid-template-columns:repeat(4,1fr)}
+  .hc{padding:20px}
+  .bm{grid-template-columns:minmax(400px,1fr) 1.15fr;align-items:start}
+  .care{grid-template-columns:1.3fr 1fr;align-items:start}
+  #view3d{height:600px}
+  #map{height:600px}
+  .chatbox{max-height:62vh}
+  iframe#v2{height:82vh}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+}
+</style>
+</head>
+<body>
+<div id="banner" data-i="banner"></div>
+
+<aside id="side"></aside>
+<header id="top"><b>ReportSimple V3</b><a href="tel:999" data-i="sos"></a></header>
+
+<main>
+<!-- HOME -->
+<section class="tab" id="t-home">
+  <h1 id="greet"></h1>
+  <div class="grid home-cards" id="homeCards"></div>
+</section>
+
+<!-- BODY MAP -->
+<section class="tab" id="t-body">
+  <h1 data-i="body"></h1>
+  <div class="bm">
+    <div>
+      <div class="row" style="margin-bottom:8px">
+        <button class="chip on" data-sex="male">Male</button><button class="chip" data-sex="female">Female</button>
+        <span style="flex:1"></span>
+        <button class="chip" data-view="0">Front</button><button class="chip" data-view="1">Back</button>
+        <button class="chip" data-view="2">Left</button><button class="chip" data-view="3">Right</button>
+      </div>
+      <div id="view3d"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="chip on" data-layer="skin">Skin</button><button class="chip" data-layer="organs">Organs (schematic)</button>
+        <label class="note" style="margin-left:auto">Zoom <input type="range" id="zoom" min="4" max="10" step="0.1" value="7"></label>
+      </div>
+      <p class="note" id="tip3d"></p>
+      <div class="card"><b data-i="orList"></b><div class="row" id="regionList" style="margin-top:8px"></div></div>
+    </div>
+    <div class="card" id="symBox"></div>
+  </div>
+</section>
+
+<!-- CHAT -->
+<section class="tab" id="t-chat">
+  <h1 data-i="chat"></h1>
+  <div class="card">
+    <div class="chatbox" id="chatLog"><div class="msg a" data-i="chatHello"></div></div>
+    <div class="row nw" style="margin-top:8px">
+      <input type="text" id="chatIn" maxlength="500" data-ph="chatPh">
+      <button class="btn sec" id="micBtn" title="Voice">🎤</button>
+      <button class="btn" id="chatSend" data-i="send"></button>
+    </div>
+    <p class="note" data-i="chatNote"></p>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section class="tab" id="t-research">
+  <h1 data-i="research"></h1>
+  <div class="card">
+    <div class="row nw"><input type="text" id="resIn" maxlength="120" data-ph="resPh"><button class="btn" id="resGo" data-i="search"></button></div>
+    <p class="note" data-i="resNote"></p>
+  </div>
+  <div id="resOut"></div>
+</section>
+
+<!-- MEDICINE -->
+<section class="tab" id="t-medicine">
+  <h1 data-i="medicine"></h1>
+  <div class="warnbox" data-i="medWarn"></div>
+  <div class="twocol">
+    <div class="card"><h2 data-i="medInfo"></h2>
+      <div class="row nw"><input type="text" id="medIn" maxlength="60" placeholder="e.g. paracetamol"><button class="btn" id="medGo" data-i="search"></button></div>
+      <div id="medOut"></div></div>
+    <div class="card"><h2 data-i="medFor"></h2>
+      <div class="row nw"><input type="text" id="condIn" maxlength="60" placeholder="e.g. fever, hypertension"><button class="btn" id="condGo" data-i="search"></button></div>
+      <div id="condOut"></div></div>
+  </div>
+  <div class="card"><h2 data-i="medInter"></h2>
+    <div class="row nw"><input type="text" id="intIn" maxlength="200" placeholder="paracetamol, ibuprofen"><button class="btn" id="intGo" data-i="check"></button></div>
+    <div id="intOut"></div></div>
+</section>
+
+<!-- CARE -->
+<section class="tab" id="t-care">
+  <h1 data-i="care"></h1>
+  <div class="row" style="margin-bottom:8px" id="kindChips"></div>
+  <div class="row nw" style="margin-bottom:10px">
+    <input type="text" id="areaIn" maxlength="100" data-ph="areaPh"><button class="btn" id="areaGo" data-i="search"></button>
+    <button class="btn sec" id="locBtn" data-i="useLoc"></button>
+  </div>
+  <div class="care">
+    <div><div id="map"></div></div>
+    <div><div id="careOut"></div></div>
+  </div>
+  <p class="note"><a href="https://bmdc.org.bd/" target="_blank" rel="noopener" data-i="bmdc"></a></p>
+</section>
+
+<!-- MY HEALTH -->
+<section class="tab" id="t-health">
+  <h1 data-i="health"></h1>
+  <div class="twocol">
+    <div class="card"><h2 data-i="addMeas"></h2>
+      <select id="hType"><option value="bp">Blood pressure (mmHg)</option><option value="weight">Weight (kg)</option><option value="glucose">Glucose (mg/dL)</option><option value="hr">Heart rate (bpm)</option></select>
+      <div class="row nw" style="margin:8px 0"><input type="number" id="hV1" step="any" placeholder="Value"><input type="number" id="hV2" step="any" placeholder="Diastolic"></div>
+      <button class="btn" id="hAdd" data-i="add"></button>
+      <p class="note" data-i="healthNote"></p></div>
+    <div class="card"><h2 data-i="trend"></h2><canvas id="chart" width="600" height="260"></canvas><div id="hList"></div></div>
+  </div>
+  <div class="card"><h2 data-i="savedChecks"></h2><div id="checksList"></div></div>
+</section>
+
+<!-- REPORTS (V2 app, unchanged) -->
+<section class="tab" id="t-reports">
+  <h1 data-i="reports"></h1>
+  <iframe id="v2" title="Report analysis"></iframe>
+</section>
+
+<!-- SETTINGS -->
+<section class="tab" id="t-settings">
+  <h1 data-i="settings"></h1>
+  <div class="card">
+    <label><b data-i="language"></b></label>
+    <select id="setLang"><option value="English">English</option><option value="Bangla">বাংলা</option></select>
+    <div class="row nw" style="margin-top:10px"><div style="flex:1"><label class="note" data-i="age"></label><input type="number" id="setAge" min="0" max="120"></div>
+      <div style="flex:1"><label class="note" data-i="sex"></label><select id="setSex"><option value="">-</option><option value="male">Male</option><option value="female">Female</option></select></div></div>
+    <p class="note" data-i="privacy"></p>
+    <div class="row"><button class="btn sec" id="exportBtn" data-i="export"></button><button class="btn red" id="wipeBtn" data-i="wipe"></button></div>
+  </div>
+</section>
+</main>
+
+<div id="moreSheet"></div>
+<nav id="bottom"></nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+<script defer>
+/* =============================== helpers =============================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+async function api(path,opt){
+  try{const r=await fetch(path,opt);const j=await r.json().catch(()=>({}));
+    if(!r.ok)return{error:j.error||('Error '+r.status)};return j}
+  catch(e){return{error:'Network problem. Check your connection and try again.'}}
+}
+const post=(p,b)=>api(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+const spin=()=>'<p class="spin">…</p>';
+
+/* =============================== i18n =============================== */
+const T={
+ en:{banner:'Educational tool only. It does not diagnose and is not a substitute for a doctor. In an emergency call 999.',sos:'Emergency 999',
+  home:'Home',body:'Body Map',chat:'AI Assistant',research:'Medical Research',medicine:'Medicine',care:'Find Care',health:'My Health',reports:'Report Analysis',settings:'Settings',more:'More',
+  greet:'Assalamu Alaikum. How can I help?',orList:'Or choose from the list',tap:'Tap the body where you feel the problem. Drag to rotate.',
+  search:'Search',send:'Send',check:'Check',add:'Add',next:'Next',back:'Back',start:'Start questions',newCheck:'New check',
+  chatHello:'Hello. Ask me a general health question. I give information with sources, not a diagnosis.',chatPh:'Type your question…',chatNote:'Your question is sent to an AI service to answer it. Do not type names or ID numbers.',
+  resPh:'e.g. type 2 diabetes treatment',resNote:'Results come from PubMed and Europe PMC. Always read the original paper.',
+  medWarn:"Do not take any medicine without a registered doctor's permission. This shows what official labels say. It is not a prescription or a dose for you.",
+  medInfo:'Medicine information',medFor:'Medicines used for a condition',medInter:'Interaction check (label text)',
+  areaPh:'Area or city, e.g. Cumilla',useLoc:'Use my location',bmdc:'Check a doctor\u2019s registration on the BMDC website',
+  addMeas:'Add a measurement',trend:'Trend',healthNote:'Saved only on this phone or computer.',savedChecks:'Saved symptom checks',
+  language:'Language of AI answers',age:'Age (optional)',sex:'Sex (optional)',
+  privacy:'No account. Your data stays in this browser. Text you send to the AI or search is processed by Featherless AI and public medical sources.',
+  export:'Export my data',wipe:'Delete all my data',
+  severity:'How severe is it? (0-10)',duration:'How long has it lasted?',words:'Describe it in your own words (optional)',
+  d1:'Less than 15 minutes',d2:'15 to 60 minutes',d3:'A few hours',d4:'Days or longer',selected:'Selected areas',noneSel:'No area selected yet.',
+  hosp:'Hospital',clinic:'Clinic',diagnostic:'Diagnostic',pharmacy:'Pharmacy',
+  result:'Result',possible:'Possible conditions to discuss (not a diagnosis)',tests:'Tests to discuss',qs:'Questions for your doctor',sources:'Sources',
+  pdf:'Download PDF for doctor',findHosp:'Find hospitals near me',save:'Save this check',saved:'Saved.'},
+ bn:{banner:'শুধু শিক্ষামূলক সরঞ্জাম। এটি রোগ নির্ণয় করে না এবং ডাক্তারের বিকল্প নয়। জরুরি অবস্থায় ৯৯৯ এ কল করুন।',sos:'জরুরি ৯৯৯',
+  home:'হোম',body:'বডি ম্যাপ',chat:'এআই সহকারী',research:'চিকিৎসা গবেষণা',medicine:'ওষুধ',care:'হাসপাতাল খুঁজুন',health:'আমার স্বাস্থ্য',reports:'রিপোর্ট বিশ্লেষণ',settings:'সেটিংস',more:'আরও',
+  greet:'আসসালামু আলাইকুম। কীভাবে সাহায্য করতে পারি?',orList:'অথবা তালিকা থেকে বাছুন',tap:'শরীরের যেখানে সমস্যা সেখানে ট্যাপ করুন। ঘোরাতে টেনে সরান।',
+  search:'খুঁজুন',send:'পাঠান',check:'যাচাই',add:'যোগ করুন',next:'পরবর্তী',back:'পিছনে',start:'প্রশ্ন শুরু করুন',newCheck:'নতুন যাচাই',
+  chatHello:'হ্যালো। স্বাস্থ্য নিয়ে সাধারণ প্রশ্ন করুন। আমি সূত্রসহ তথ্য দিই, রোগ নির্ণয় করি না।',chatPh:'আপনার প্রশ্ন লিখুন…',chatNote:'আপনার প্রশ্ন উত্তর দিতে একটি এআই সেবায় পাঠানো হয়। নাম বা আইডি নম্বর লিখবেন না।',
+  resPh:'যেমন: type 2 diabetes treatment',resNote:'ফলাফল PubMed ও Europe PMC থেকে আসে। সবসময় মূল গবেষণাপত্র পড়ুন।',
+  medWarn:'নিবন্ধিত ডাক্তারের অনুমতি ছাড়া কোনো ওষুধ খাবেন না। এখানে অফিসিয়াল লেবেলের তথ্য দেখানো হয়। এটি প্রেসক্রিপশন বা আপনার জন্য ডোজ নয়।',
+  medInfo:'ওষুধের তথ্য',medFor:'রোগ অনুযায়ী ব্যবহৃত ওষুধ',medInter:'ওষুধের মিথস্ক্রিয়া (লেবেলের তথ্য)',
+  areaPh:'এলাকা বা শহর, যেমন কুমিল্লা',useLoc:'আমার অবস্থান ব্যবহার করুন',bmdc:'BMDC ওয়েবসাইটে ডাক্তারের নিবন্ধন যাচাই করুন',
+  addMeas:'পরিমাপ যোগ করুন',trend:'ধারা',healthNote:'শুধু এই ফোন বা কম্পিউটারে সংরক্ষিত থাকে।',savedChecks:'সংরক্ষিত উপসর্গ যাচাই',
+  language:'এআই উত্তরের ভাষা',age:'বয়স (ঐচ্ছিক)',sex:'লিঙ্গ (ঐচ্ছিক)',
+  privacy:'কোনো অ্যাকাউন্ট নেই। আপনার তথ্য এই ব্রাউজারেই থাকে। এআই বা সার্চে পাঠানো লেখা Featherless AI ও পাবলিক মেডিকেল সূত্রে প্রক্রিয়া হয়।',
+  export:'আমার তথ্য এক্সপোর্ট',wipe:'আমার সব তথ্য মুছুন',
+  severity:'কতটা তীব্র? (০-১০)',duration:'কতক্ষণ ধরে হচ্ছে?',words:'নিজের ভাষায় লিখুন (ঐচ্ছিক)',
+  d1:'১৫ মিনিটের কম',d2:'১৫ থেকে ৬০ মিনিট',d3:'কয়েক ঘণ্টা',d4:'কয়েক দিন বা বেশি',selected:'নির্বাচিত স্থান',noneSel:'এখনো কোনো স্থান নির্বাচন করা হয়নি।',
+  hosp:'হাসপাতাল',clinic:'ক্লিনিক',diagnostic:'ডায়াগনস্টিক',pharmacy:'ফার্মেসি',
+  result:'ফলাফল',possible:'আলোচনার জন্য সম্ভাব্য অবস্থা (রোগ নির্ণয় নয়)',tests:'আলোচনার জন্য পরীক্ষা',qs:'ডাক্তারকে প্রশ্ন',sources:'সূত্র',
+  pdf:'ডাক্তারের জন্য PDF নামান',findHosp:'কাছের হাসপাতাল খুঁজুন',save:'এই যাচাই সংরক্ষণ',saved:'সংরক্ষিত।'}
+};
+let LANG=lsGet('rs3_lang','English');
+const t=k=>(T[LANG==='Bangla'?'bn':'en'][k])||T.en[k]||k;
+function applyI18n(){
+  document.documentElement.lang=LANG==='Bangla'?'bn':'en';
+  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=t(e.dataset.i)});
+  document.querySelectorAll('[data-ph]').forEach(e=>{e.placeholder=t(e.dataset.ph)});
+  $('greet').textContent=t('greet');$('tip3d').textContent=t('tap');
+  buildNav();buildHome();buildRegionList();buildKinds();renderSym();
+}
+
+/* =============================== navigation =============================== */
+const NAV=[['home','🏠'],['body','🧍'],['chat','💬'],['research','📚'],['medicine','💊'],['care','🏥'],['health','❤️'],['reports','📄'],['settings','⚙️']];
+const BOTTOM=['home','body','chat','care'];
+let CUR='home';
+function buildNav(){
+  $('side').innerHTML='<div class="brand">ReportSimple V3</div><div class="sub">AI Medical Intelligence</div>'+
+    NAV.map(([k,i])=>`<button data-go="${k}" class="${k===CUR?'on':''}"><span>${i}</span>${esc(t(k))}</button>`).join('')+
+    `<a class="sos" href="tel:999">${esc(t('sos'))}</a>`;
+  $('bottom').innerHTML=BOTTOM.map(k=>{const n=NAV.find(x=>x[0]===k);return `<button data-go="${k}" class="${k===CUR?'on':''}"><span class="ic">${n[1]}</span>${esc(t(k))}</button>`}).join('')+
+    `<button id="moreBtn"><span class="ic">⋯</span>${esc(t('more'))}</button>`;
+  $('moreSheet').innerHTML=['research','medicine','health','reports','settings'].map(k=>{const n=NAV.find(x=>x[0]===k);return `<button data-go="${k}"><span>${n[1]}</span>${esc(t(k))}</button>`}).join('');
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  if(g){go(g.dataset.go);return}
+  if(e.target.closest('#moreBtn')){$('moreSheet').classList.toggle('open');return}
+  if(!e.target.closest('#moreSheet'))$('moreSheet').classList.remove('open');
+});
+function go(tab){
+  CUR=tab;
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+tab));
+  $('moreSheet').classList.remove('open');buildNav();window.scrollTo(0,0);
+  try{history.replaceState(null,'','#'+tab)}catch(e){}
+  if(tab==='body')init3D();
+  if(tab==='care')initMap();
+  if(tab==='health')renderHealth();
+  if(tab==='reports'&&!$('v2').src)$('v2').src='/v2';
+}
+function buildHome(){
+  const sub={body:'Pain location & questions',chat:'Ask with sources',research:'PubMed & Europe PMC',medicine:'Labels & safety',care:'Hospitals & pharmacies',health:'Your own records',reports:'Lab report explainer'};
+  $('homeCards').innerHTML=['body','chat','research','medicine','care','health','reports','settings'].map(k=>{const n=NAV.find(x=>x[0]===k);
+    return `<button class="hc" data-go="${k}"><span class="ic">${n[1]}</span><b>${esc(t(k))}</b><span class="s">${esc(sub[k]||'')}</span></button>`}).join('');
+}
+
+/* =============================== profile =============================== */
+const prof=()=>lsGet('rs3_prof',{});
+function profBody(){const p=prof();return {age:p.age||undefined,sex:p.sex||undefined,lang:LANG}}
+
+/* =============================== emergency / safety rendering =============================== */
+function emergencyHTML(s){
+  const fl=(s.flags||[]).map(f=>`<li>${esc(f.message)}</li>`).join('');
+  return `<div class="emerg"><h3>⚠ Emergency warning</h3><ul>${fl}</ul><p><b>${esc(s.action)}</b></p>
+   <div class="row"><a class="btn red" href="tel:${esc(s.emergency_number||'999')}">Call ${esc(s.emergency_number||'999')}</a>
+   <button class="btn sec" onclick="nearestNow()">${esc(t('findHosp'))}</button></div></div>`;
+}
+function nearestNow(){go('care');setKind('hospital');useLocation()}
+
+/* =============================== 3D body map =============================== */
+const REGIONS=[['head','Head','মাথা'],['neck','Neck','ঘাড়'],['chest','Chest','বুক'],['abdomen','Abdomen','পেট'],['upper back','Upper back','উপরের পিঠ'],['lower back','Lower back','নিচের পিঠ'],['pelvis','Pelvis / hip','কোমর'],['left arm','Left arm','বাম হাত'],['right arm','Right arm','ডান হাত'],['left leg','Left leg','বাম পা'],['right leg','Right leg','ডান পা']];
+const regName=id=>{const r=REGIONS.find(x=>x[0]===id);return r?(LANG==='Bangla'?r[2]:r[1]):id};
+function buildRegionList(){
+  $('regionList').innerHTML=REGIONS.map(r=>`<button class="chip" data-region="${esc(r[0])}">${esc(LANG==='Bangla'?r[2]:r[1])}</button>`).join('');
+}
+const G={ready:false};
+function init3D(){
+  if(G.tried){resize3D();return}
+  G.tried=true;
+  const box=$('view3d');
+  if(!window.THREE){box.innerHTML='<p class="note" style="padding:14px">3D viewer could not load (no internet or blocked). Please use the list below.</p>';return}
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})}catch(e){box.innerHTML='<p class="note" style="padding:14px">3D is not supported on this device. Please use the list below.</p>';return}
+  box.innerHTML='';box.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,0.1,100);cam.position.set(0,0.1,7);
+  scene.add(new THREE.AmbientLight(0xffffff,0.85));const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(2,4,5);scene.add(dl);
+  const body=new THREE.Group();scene.add(body);
+  const skin=new THREE.MeshStandardMaterial({color:0xf0c8a4,roughness:0.85,transparent:true,opacity:1});
+  const parts={};
+  function mk(name,geo,x,y,z,region,sx,sy,sz,rz){
+    const m=new THREE.Mesh(geo,skin);m.position.set(x,y,z);m.scale.set(sx||1,sy||1,sz||1);if(rz)m.rotation.z=rz;
+    m.userData.region=region;body.add(m);parts[name]=m;return m}
+  mk('head',new THREE.SphereGeometry(0.34,24,18),0,1.85,0,'head');
+  mk('neck',new THREE.CylinderGeometry(0.13,0.15,0.25,16),0,1.45,0,'neck');
+  mk('chest',new THREE.CylinderGeometry(0.52,0.42,0.95,24),0,0.85,0,'chest',1,1,0.62);
+  mk('abdomen',new THREE.CylinderGeometry(0.42,0.38,0.62,24),0,0.05,0,'abdomen',1,1,0.62);
+  mk('pelvis',new THREE.CylinderGeometry(0.4,0.46,0.42,24),0,-0.46,0,'pelvis',1,1,0.66);
+  mk('armL',new THREE.CylinderGeometry(0.11,0.09,1.45,14),0.72,0.55,0,'left arm',1,1,1,0.12);
+  mk('armR',new THREE.CylinderGeometry(0.11,0.09,1.45,14),-0.72,0.55,0,'right arm',1,1,1,-0.12);
+  mk('legL',new THREE.CylinderGeometry(0.17,0.11,1.85,16),0.22,-1.75,0,'left leg');
+  mk('legR',new THREE.CylinderGeometry(0.17,0.11,1.85,16),-0.22,-1.75,0,'right leg');
+  const organs=new THREE.Group();organs.visible=false;body.add(organs);
+  function org(geo,color,x,y,z,sx,sy,sz){const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:.6}));m.position.set(x,y,z);m.scale.set(sx,sy,sz);organs.add(m)}
+  org(new THREE.SphereGeometry(0.15,16,12),0xc62828,0.1,0.95,0.08,1,1.15,1);            // heart (schematic)
+  org(new THREE.SphereGeometry(0.2,16,12),0xf4a6b0,0.3,1.0,0,0.8,1.5,0.8);              // left lung
+  org(new THREE.SphereGeometry(0.2,16,12),0xf4a6b0,-0.3,1.0,0,0.8,1.5,0.8);             // right lung
+  org(new THREE.SphereGeometry(0.17,16,12),0xd98c5f,0.15,0.2,0.08,1.2,0.9,0.9);         // stomach
+  org(new THREE.SphereGeometry(0.2,16,12),0x8d4a2b,-0.2,0.3,0.06,1.4,0.8,0.8);          // liver
+  const marks=new THREE.Group();body.add(marks);
+  Object.assign(G,{ready:true,renderer,scene,cam,body,skin,parts,organs,marks,sex:'male'});
+  function render(){renderer.render(scene,cam)}G.render=render;
+  // drag to rotate, tap to pick
+  const el=renderer.domElement;let down=null;
+  el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,moved:0,lx:e.clientX};el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!down)return;down.moved+=Math.abs(e.clientX-down.lx);body.rotation.y+=(e.clientX-down.lx)*0.012;down.lx=e.clientX;render()});
+  el.addEventListener('pointerup',e=>{if(down&&down.moved<6)pick(e);down=null});
+  el.addEventListener('pointercancel',()=>{down=null});
+  const ray=new THREE.Raycaster();
+  function pick(e){
+    const r=el.getBoundingClientRect(),v=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(v,cam);const hit=ray.intersectObjects(Object.values(parts),false)[0];if(!hit)return;
+    let region=hit.object.userData.region;const lp=body.worldToLocal(hit.point.clone());
+    if(lp.z<0){if(region==='chest')region='upper back';else if(region==='abdomen')region='lower back'}
+    const dot=new THREE.Mesh(new THREE.SphereGeometry(0.09,12,10),new THREE.MeshBasicMaterial({color:0xe53935}));
+    dot.position.copy(lp);dot.userData.region=region;marks.add(dot);addRegion(region);render()}
+  resize3D();
+  new ResizeObserver(resize3D).observe(box);
+}
+function resize3D(){if(!G.ready)return;const b=$('view3d'),w=b.clientWidth,h=b.clientHeight;if(!w||!h)return;G.renderer.setSize(w,h,false);G.renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));G.cam.aspect=w/h;G.cam.updateProjectionMatrix();G.render()}
+function setSex(s){
+  if(!G.ready)return;G.sex=s;const f=s==='female';
+  G.parts.chest.scale.x=f?0.86:1;G.parts.abdomen.scale.x=f?0.92:1;G.parts.pelvis.scale.x=f?1.12:1;
+  G.parts.armL.position.x=f?0.66:0.72;G.parts.armR.position.x=f?-0.66:-0.72;G.render()}
+function setView(i){if(!G.ready)return;G.body.rotation.y=[0,Math.PI,-Math.PI/2,Math.PI/2][i];G.render()}
+function setLayer(l){if(!G.ready)return;G.organs.visible=l==='organs';G.skin.opacity=l==='organs'?0.22:1;G.render()}
+document.addEventListener('click',e=>{
+  const s=e.target.closest('[data-sex]');if(s){document.querySelectorAll('[data-sex]').forEach(c=>c.classList.toggle('on',c===s));setSex(s.dataset.sex)}
+  const v=e.target.closest('[data-view]');if(v)setView(+v.dataset.view);
+  const l=e.target.closest('[data-layer]');if(l){document.querySelectorAll('[data-layer]').forEach(c=>c.classList.toggle('on',c===l));setLayer(l.dataset.layer)}
+  const r=e.target.closest('[data-region]');if(r)addRegion(r.dataset.region);
+});
+$('zoom').addEventListener('input',e=>{if(G.ready){G.cam.position.z=+e.target.value;G.render()}});
+
+/* =============================== symptom flow =============================== */
+const S={step:'select',regions:[],severity:5,dur:null,free:'',answers:{},result:null};
+function addRegion(r){if(!S.regions.includes(r))S.regions.push(r);if(S.step!=='select'&&S.step!=='details'){return}renderSym()}
+function resetSym(){Object.assign(S,{step:'select',regions:[],severity:5,dur:null,free:'',answers:{},result:null});if(G.ready){while(G.marks.children.length)G.marks.remove(G.marks.children[0]);G.render()}renderSym()}
+function freeFull(){const extra=S.regions.slice(1).map(regName).join(', ');return (S.free+(extra?' Other areas: '+extra:'')).trim()}
+function payload(){return Object.assign({region:S.regions[0]||'',severity:S.severity,free_text:freeFull(),answers:S.answers,duration_minutes:S.dur},profBody())}
+function renderSym(){
+  const b=$('symBox');if(!b)return;
+  if(S.step==='select'){
+    b.innerHTML=`<h2>${esc(t('selected'))}</h2>`+(S.regions.length?`<div class="row">${S.regions.map(r=>`<span class="chip on" data-rm="${esc(r)}">${esc(regName(r))} ✕</span>`).join('')}</div>`:`<p class="note">${esc(t('noneSel'))}</p>`)+
+      `<p><button class="btn" id="symNext" ${S.regions.length?'':'disabled'}>${esc(t('next'))}</button></p>`;
+    const n=$('symNext');if(n)n.onclick=()=>{S.step='details';renderSym()}
+  }else if(S.step==='details'){
+    b.innerHTML=`<h2>${esc(S.regions.map(regName).join(', '))}</h2>
+      <label>${esc(t('severity'))}: <b id="sevV">${S.severity}</b></label><input type="range" id="sev" min="0" max="10" value="${S.severity}">
+      <label>${esc(t('duration'))}</label><select id="dur"><option value="">-</option><option value="10">${esc(t('d1'))}</option><option value="30">${esc(t('d2'))}</option><option value="300">${esc(t('d3'))}</option><option value="3000">${esc(t('d4'))}</option></select>
+      <label>${esc(t('words'))}</label><textarea id="free" maxlength="600">${esc(S.free)}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn sec" id="symBack">${esc(t('back'))}</button><button class="btn" id="symGo">${esc(t('start'))}</button></div>`;
+    $('dur').value=S.dur==null?'':String(S.dur);
+    $('sev').oninput=e=>{S.severity=+e.target.value;$('sevV').textContent=S.severity};
+    $('symBack').onclick=()=>{S.step='select';renderSym()};
+    $('symGo').onclick=()=>{S.free=$('free').value;S.dur=$('dur').value?+$('dur').value:null;S.step='interview';nextQ()};
+  }else if(S.step==='result'&&S.result){renderResult()}
+}
+document.addEventListener('click',e=>{const x=e.target.closest('[data-rm]');if(x){S.regions=S.regions.filter(r=>r!==x.dataset.rm);renderSym()}});
+async function nextQ(){
+  const b=$('symBox');b.innerHTML=spin();
+  const r=await post('/api/v3/interview',payload());
+  if(r.error){b.innerHTML=`<p>${esc(r.error)}</p><button class="btn" id="retry">${esc(t('next'))}</button>`;$('retry').onclick=nextQ;return}
+  if(r.stop){b.innerHTML=emergencyHTML(r.safety)+`<button class="btn sec" id="symNew">${esc(t('newCheck'))}</button>`;$('symNew').onclick=resetSym;return}
+  if(r.done)return runAssess();
+  b.innerHTML=(r.safety&&r.safety.level==='urgent'?`<div class="urgent">${esc(r.safety.action)}</div>`:'')+
+    `<h2>${esc(r.text)}</h2>`+r.options.map((o,i)=>`<button class="opt" data-opt="${i}">${esc(o.label)}</button>`).join('');
+  b.querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{S.answers[r.id]=r.options[+btn.dataset.opt].value;nextQ()});
+}
+async function runAssess(){
+  const b=$('symBox');b.innerHTML=spin();
+  const r=await post('/api/v3/assess',payload());
+  if(r.error){b.innerHTML=`<p>${esc(r.error)}</p><button class="btn" id="retry">${esc(t('next'))}</button>`;$('retry').onclick=runAssess;return}
+  if(r.emergency){b.innerHTML=emergencyHTML(r.safety)+`<button class="btn sec" id="symNew">${esc(t('newCheck'))}</button>`;$('symNew').onclick=resetSym;return}
+  S.result=r;S.step='result';renderResult();
+}
+const LK={'more likely':'a','possible':'b','less likely but important':'c'};
+function srcHTML(list){return (list||[]).map(s=>`<div class="src">• ${safeUrl(s.url)?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`:esc(s.title)} <span class="note">(${esc(s.source)}${s.year?', '+esc(s.year):''})</span></div>`).join('')}
+function resultHTML(r){
+  return (r.safety&&r.safety.level==='urgent'?`<div class="urgent">${esc(r.safety.action)}</div>`:'')+
+  `<h2>${esc(t('result'))}</h2><p>${esc(r.summary)}</p>`+
+  (r.possible_conditions&&r.possible_conditions.length?`<h2>${esc(t('possible'))}</h2>`+r.possible_conditions.map(c=>`<div class="card" style="margin-bottom:8px"><b>${esc(c.name)}</b> <span class="tag ${LK[c.likelihood]||'b'}">${esc(c.likelihood)}</span>${c.supports?`<div class="note">✔ ${esc(c.supports)}</div>`:''}${c.missing?`<div class="note">? ${esc(c.missing)}</div>`:''}</div>`).join(''):'')+
+  (r.tests_to_discuss&&r.tests_to_discuss.length?`<h2>${esc(t('tests'))}</h2><ul>${r.tests_to_discuss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')+
+  (r.questions_for_doctor&&r.questions_for_doctor.length?`<h2>${esc(t('qs'))}</h2><ul>${r.questions_for_doctor.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')+
+  `<h2>${esc(t('sources'))}</h2>`+(r.sources_found?srcHTML(r.sources):'<p class="note">No sources were found for this search. Please ask a doctor.</p>')+
+  `<p class="note">${esc(r.disclaimer||'')}</p>`;
+}
+function renderResult(){
+  const b=$('symBox');
+  b.innerHTML=resultHTML(S.result)+`<div class="row"><button class="btn" id="pdfBtn">${esc(t('pdf'))}</button><button class="btn sec" id="hospBtn">${esc(t('findHosp'))}</button><button class="btn sec" id="saveBtn">${esc(t('save'))}</button><button class="btn sec" id="newBtn">${esc(t('newCheck'))}</button></div>`;
+  $('pdfBtn').onclick=downloadPdf;$('hospBtn').onclick=nearestNow;$('newBtn').onclick=resetSym;
+  $('saveBtn').onclick=()=>{const l=lsGet('rs3_checks',[]);l.unshift({date:new Date().toISOString(),regions:S.regions,severity:S.severity,free:S.free,answers:S.answers,result:S.result});lsSet('rs3_checks',l.slice(0,30));$('saveBtn').textContent=t('saved');$('saveBtn').disabled=true};
+}
+async function downloadPdf(r0){
+  const src=r0&&r0.result?r0:{regions:S.regions,severity:S.severity,free:S.free,answers:S.answers,result:S.result};
+  const p=prof();
+  try{
+    const res=await fetch('/api/v3/summary-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({region:(src.regions||[]).map(regName).join(', '),severity:src.severity,free_text:src.free,answers:src.answers,age:p.age,sex:p.sex,date:new Date().toISOString().slice(0,10),result:src.result})});
+    if(!res.ok)throw 0;const blob=await res.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='symptom_summary.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){alert('Could not make the PDF. Please try again.')}
+}
+
+/* =============================== chat =============================== */
+const chatHist=[];
+async function sendChat(){
+  const inp=$('chatIn'),m=inp.value.trim();if(!m)return;inp.value='';
+  const log=$('chatLog');log.insertAdjacentHTML('beforeend',`<div class="msg u">${esc(m)}</div><div class="msg a" id="pending">…</div>`);log.scrollTop=log.scrollHeight;
+  const r=await post('/api/v3/chat',{message:m,history:chatHist.slice(-6),lang:LANG});
+  const p=$('pending');p.removeAttribute('id');
+  if(r.error){p.textContent=r.error}
+  else if(r.emergency){p.outerHTML=emergencyHTML(r.safety)}
+  else{p.innerHTML=esc(r.reply)+(r.sources&&r.sources.length?'<div style="margin-top:6px"><b>'+esc(t('sources'))+'</b>'+srcHTML(r.sources)+'</div>':'');chatHist.push({role:'user',content:m},{role:'assistant',content:r.reply})}
+  log.scrollTop=log.scrollHeight;
+}
+$('chatSend').onclick=sendChat;$('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+(function voice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition,b=$('micBtn');
+  if(!SR){b.style.display='none';return}
+  b.onclick=()=>{const rec=new SR();rec.lang=LANG==='Bangla'?'bn-BD':'en-US';rec.onresult=e=>{$('chatIn').value=e.results[0][0].transcript};rec.onerror=()=>{};rec.start()};
+})();
+
+/* =============================== research =============================== */
+$('resGo').onclick=async()=>{
+  const q=$('resIn').value.trim(),o=$('resOut');if(q.length<3)return;o.innerHTML=spin();
+  const r=await api('/api/v3/evidence?q='+encodeURIComponent(q));
+  if(r.error){o.innerHTML=`<div class="card">${esc(r.error)}</div>`;return}
+  o.innerHTML=r.found?r.items.map(i=>`<div class="card"><b>${safeUrl(i.url)?`<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>`:esc(i.title)}</b><div class="note">${esc(i.source)} · ${esc(i.journal)} ${esc(i.year)}${i.doi?' · DOI '+esc(i.doi):''}</div></div>`).join(''):'<div class="card">No results found.</div>';
+};
+$('resIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('resGo').click()});
+
+/* =============================== medicine =============================== */
+function medCard(m){
+  const sec=(k,v)=>v?`<details><summary>${esc(k)}</summary><p>${esc(v)}</p></details>`:'';
+  return `<div class="card" style="margin-top:10px"><b>${esc(m.generic_name)}</b><div class="note">${esc((m.brand_names||[]).join(', '))}</div>`+
+    sec('Used for (label)',m.indications)+sec('Contraindications',m.contraindications)+sec('Warnings',m.warnings)+sec('Interactions',m.interactions)+sec('Side effects',m.side_effects)+
+    `<p class="note">${esc(m.note)} Label date ${esc(m.label_date)}. <a href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">Source</a></p></div>`;
+}
+$('medGo').onclick=async()=>{const n=$('medIn').value.trim(),o=$('medOut');if(n.length<2)return;o.innerHTML=spin();
+  const r=await api('/api/v3/medicine?name='+encodeURIComponent(n));
+  o.innerHTML=r.error?esc(r.error):(r.found?medCard(r.medicine):'<p class="note">No official label found for this name. Try the generic name.</p>')};
+$('condGo').onclick=async()=>{const n=$('condIn').value.trim(),o=$('condOut');if(n.length<3)return;o.innerHTML=spin();
+  const r=await api('/api/v3/medicines-for?condition='+encodeURIComponent(n));
+  o.innerHTML=r.error?esc(r.error):(r.found?r.items.map(m=>`<div class="card" style="margin-top:8px"><b>${esc(m.generic_name)}</b><div class="note">${esc((m.indications||'').slice(0,220))}…</div><a href="${esc(safeUrl(m.url))}" target="_blank" rel="noopener">Label</a></div>`).join('')+`<p class="note">${esc(r.warning)}</p>`:'<p class="note">No labels found for this condition name.</p>')};
+$('intGo').onclick=async()=>{const names=$('intIn').value.split(',').map(s=>s.trim()).filter(Boolean),o=$('intOut');if(names.length<2){o.innerHTML='<p class="note">Enter 2 to 6 medicine names, separated by commas.</p>';return}o.innerHTML=spin();
+  const r=await post('/api/v3/interactions',{names});
+  o.innerHTML=r.error?esc(r.error):r.items.map(i=>`<div class="card" style="margin-top:8px"><b>${esc(i.name)}</b>${i.found?(i.interactions?`<p>${esc(i.interactions)}</p>`:'<p class="note">The label has no interaction text.</p>'):'<p class="note">No label found.</p>'}${safeUrl(i.url)?`<a href="${esc(i.url)}" target="_blank" rel="noopener">Label</a>`:''}</div>`).join('')+`<p class="note">${esc(r.note)}</p>`};
+
+/* =============================== care map =============================== */
+const care={kind:'hospital',map:null,layer:null,center:null};
+function buildKinds(){$('kindChips').innerHTML=['hospital','clinic','diagnostic','pharmacy'].map(k=>`<button class="chip ${k===care.kind?'on':''}" data-kind="${k}">${esc(t(k==='hospital'?'hosp':k))}</button>`).join('')}
+function setKind(k){care.kind=k;buildKinds();if(care.center)runCare()}
+document.addEventListener('click',e=>{const k=e.target.closest('[data-kind]');if(k)setKind(k.dataset.kind)});
+function initMap(){
+  if(care.map)return care.map.invalidateSize();
+  if(!window.L){$('map').innerHTML='<p class="note" style="padding:14px">The map could not load (no internet?). The list still works.</p>';return}
+  care.map=L.map('map').setView([23.8103,90.4125],11);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(care.map);
+  care.layer=L.layerGroup().addTo(care.map);
+}
+function useLocation(){
+  if(!navigator.geolocation){$('careOut').innerHTML='<div class="card">Location is not available. Type an area name instead.</div>';return}
+  $('careOut').innerHTML=spin();
+  navigator.geolocation.getCurrentPosition(p=>{care.center={lat:p.coords.latitude,lon:p.coords.longitude};runCare()},
+    ()=>{$('careOut').innerHTML='<div class="card">Location permission was not given. Type an area name instead.</div>'},{timeout:12000,maximumAge:60000});
+}
+async function runCare(){
+  const o=$('careOut');o.innerHTML=spin();
+  const c=care.center,q=c.q?'q='+encodeURIComponent(c.q):`lat=${c.lat}&lon=${c.lon}`;
+  const r=await api(`/api/v3/places?kind=${care.kind}&${q}`);
+  if(r.error){o.innerHTML=`<div class="card">${esc(r.error)}</div>`;return}
+  care.center={lat:r.center.lat,lon:r.center.lon};
+  if(care.map){care.layer.clearLayers();care.map.setView([r.center.lat,r.center.lon],13);
+    L.circleMarker([r.center.lat,r.center.lon],{radius:7,color:'#1769e0',fillOpacity:.9}).addTo(care.layer).bindPopup('Search centre');
+    r.items.forEach(i=>L.circleMarker([i.lat,i.lon],{radius:8,color:'#d32f2f',fillOpacity:.7}).addTo(care.layer).bindPopup(esc(i.name)));
+    setTimeout(()=>care.map.invalidateSize(),50)}
+  o.innerHTML=(r.found?r.items.map(i=>`<div class="card"><b>${esc(i.name)}</b> ${i.emergency?'<span class="tag c">Emergency</span>':''}<div class="note">${esc(i.distance_km)} km${i.address?' · '+esc(i.address):''}</div>
+    ${i.phone?`<div><a href="tel:${esc(i.phone.replace(/[^+\d]/g,''))}">${esc(i.phone)}</a></div>`:''}${safeUrl(i.website)?`<div><a href="${esc(i.website)}" target="_blank" rel="noopener">Website</a></div>`:''}
+    ${i.opening_hours?`<div class="note">${esc(i.opening_hours)}</div>`:''}<a class="btn sec" style="margin-top:6px" href="${esc(i.directions_url)}" target="_blank" rel="noopener">Directions</a></div>`).join(''):'<div class="card">No places found in the map data for this area. The map may be incomplete.</div>')+`<p class="note">${esc(r.note)}</p>`;
+}
+$('areaGo').onclick=()=>{const q=$('areaIn').value.trim();if(!q)return;care.center={q};runCare()};
+$('areaIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('areaGo').click()});
+$('locBtn').onclick=useLocation;
+
+/* =============================== my health (user's own data only) =============================== */
+const HT={bp:{label:'Blood pressure',unit:'mmHg'},weight:{label:'Weight',unit:'kg'},glucose:{label:'Glucose',unit:'mg/dL'},hr:{label:'Heart rate',unit:'bpm'}};
+const hData=()=>lsGet('rs3_health',[]);
+function syncHForm(){$('hV2').style.display=$('hType').value==='bp'?'':'none';$('hV1').placeholder=$('hType').value==='bp'?'Systolic':'Value'}
+$('hType').onchange=()=>{syncHForm();renderHealth()};
+$('hAdd').onclick=()=>{
+  const type=$('hType').value,v1=parseFloat($('hV1').value),v2=parseFloat($('hV2').value);
+  if(!(v1>0&&v1<1000)||(type==='bp'&&!(v2>0&&v2<1000)))return;
+  const d=hData();d.push({t:new Date().toISOString(),type,v1,v2:type==='bp'?v2:null});lsSet('rs3_health',d.slice(-300));
+  $('hV1').value='';$('hV2').value='';renderHealth();
+};
+function renderHealth(){
+  syncHForm();const type=$('hType').value,rows=hData().filter(x=>x.type===type);
+  drawChart(rows,type);
+  $('hList').innerHTML=rows.slice(-8).reverse().map(x=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span>${esc(new Date(x.t).toLocaleString())}</span><b>${esc(x.v1)}${x.v2?'/'+esc(x.v2):''} ${esc(HT[type].unit)}</b><button class="chip" data-hdel="${esc(x.t)}">✕</button></div>`).join('')||'<p class="note">No measurements yet.</p>';
+  const cl=lsGet('rs3_checks',[]);
+  $('checksList').innerHTML=cl.map((c,i)=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span>${esc(new Date(c.date).toLocaleDateString())} · ${esc((c.regions||[]).map(regName).join(', '))}</span><span><button class="chip" data-cview="${i}">View</button> <button class="chip" data-cdel="${i}">✕</button></span></div>`).join('')||'<p class="note">Nothing saved yet.</p>';
+}
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-hdel]');if(d){lsSet('rs3_health',hData().filter(x=>x.t!==d.dataset.hdel));renderHealth()}
+  const cd=e.target.closest('[data-cdel]');if(cd){const l=lsGet('rs3_checks',[]);l.splice(+cd.dataset.cdel,1);lsSet('rs3_checks',l);renderHealth()}
+  const cv=e.target.closest('[data-cview]');if(cv){const c=lsGet('rs3_checks',[])[+cv.dataset.cview];if(c){Object.assign(S,{step:'result',regions:c.regions,severity:c.severity,free:c.free,answers:c.answers,result:c.result});go('body');renderSym()}}
+});
+function drawChart(rows,type){
+  const cv=$('chart'),c=cv.getContext('2d'),W=cv.width,H=cv.height;c.clearRect(0,0,W,H);c.font='13px sans-serif';c.fillStyle='#5b6b85';
+  if(rows.length<2){c.fillText(rows.length?'Add one more measurement to see a trend.':'No data yet.',14,H/2);return}
+  const series=type==='bp'?[{k:'v1',col:'#d32f2f'},{k:'v2',col:'#1769e0'}]:[{k:'v1',col:'#1769e0'}];
+  const vals=rows.flatMap(r=>series.map(s=>r[s.k])),mn=Math.min(...vals),mx=Math.max(...vals),pad=34,rg=(mx-mn)||1;
+  c.strokeStyle='#dbe4f0';c.strokeRect(pad,10,W-pad-10,H-34);c.fillText(String(mx),2,18);c.fillText(String(mn),2,H-24);
+  series.forEach(s=>{c.strokeStyle=s.col;c.fillStyle=s.col;c.lineWidth=2;c.beginPath();
+    rows.forEach((r,i)=>{const x=pad+(W-pad-14)*i/(rows.length-1),y=H-24-(H-44)*(r[s.k]-mn)/rg;i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();
+    rows.forEach((r,i)=>{const x=pad+(W-pad-14)*i/(rows.length-1),y=H-24-(H-44)*(r[s.k]-mn)/rg;c.beginPath();c.arc(x,y,3,0,7);c.fill()})});
+}
+
+/* =============================== settings =============================== */
+$('setLang').value=LANG;{const p=prof();$('setAge').value=p.age||'';$('setSex').value=p.sex||''}
+$('setLang').onchange=e=>{LANG=e.target.value;lsSet('rs3_lang',LANG);applyI18n()};
+const saveProf=()=>{const a=parseInt($('setAge').value,10);lsSet('rs3_prof',{age:a>0&&a<=120?a:null,sex:$('setSex').value})};
+$('setAge').onchange=saveProf;$('setSex').onchange=saveProf;
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({profile:prof(),health:hData(),checks:lsGet('rs3_checks',[])},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my_reportsimple_data.json';a.click()};
+$('wipeBtn').onclick=()=>{if(confirm('Delete all saved data on this device?')){['rs3_health','rs3_checks','rs3_prof'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});renderHealth();alert('Deleted.')}};
+
+/* =============================== start =============================== */
+applyI18n();
+go((location.hash||'#home').slice(1).replace(/[^a-z]/g,'')&&NAV.some(n=>n[0]===location.hash.slice(1))?location.hash.slice(1):'home');
+</script>
+</body>
+</html>
