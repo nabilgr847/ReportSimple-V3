@@ -1,0 +1,7 @@
+flask
+requests
+pdf2image
+pillow
+reportlab
+pdfplumber
+pytesseract
