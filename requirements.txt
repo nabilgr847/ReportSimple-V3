@@ -1,5 +1,5 @@
 flask
-requests
+openai
 pdf2image
 pillow
 reportlab
